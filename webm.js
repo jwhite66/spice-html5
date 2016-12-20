@@ -393,28 +393,39 @@ webm_SeekHead.prototype =
 
 function webm_AudioTrackEntry()
 {
+    /*
+    ** In general, we follow this specification:
+    **   https://www.matroska.org/technical/specs/index.html
+    ** we supply the mandatory values, and a comment notes
+    ** where we differ from the default
+    **   There is one RECOMMENDED guideline we are omitting;
+    ** the OPUS codec_delay is recommended to be 80ms.
+    ** However, the spice server does not currently provide time
+    ** stamps that are offset by 80ms, so you effectively get an
+    ** 80ms lag with this setting.
+    */
     this.id = WEBM_TRACK_ENTRY;
     this.number = 1;
     this.uid = 1;
     this.type = 2; // Audio
     this.flag_enabled = 1;
     this.flag_default = 1;
-    this.flag_forced = 1;
-    this.flag_lacing = 0;
-    this.min_cache = 0; // fixme - check
+    this.flag_forced = 1;  // Different than default; we wish to force
+    this.flag_lacing = 1;
+    this.min_cache = 0;
     this.max_block_addition_id = 0;
-    this.codec_decode_all = 0; // fixme - check
-    this.seek_pre_roll = 0; // 80000000; // fixme - check
-    this.codec_delay =   80000000; // Must match codec_private.preskip
+    this.seek_pre_roll = 0;
+    this.codec_delay =   0; // Must match codec_private.preskip
     this.codec_id = "A_OPUS";
+    this.codec_decode_all = 1;
     this.audio = new webm_Audio(OPUS_FREQUENCY);
 
     // See:  http://tools.ietf.org/html/draft-terriberry-oggopus-01
     this.codec_private = [ 0x4f, 0x70, 0x75, 0x73, 0x48, 0x65, 0x61, 0x64,  // OpusHead
                            0x01, // Version
                            OPUS_CHANNELS,
-                           0x00, 0x0F, // Preskip - 3840 samples - should be 8ms at 48kHz
-                           0x80, 0xbb, 0x00, 0x00,  // 48000
+                           0x00, 0x00, // Preskip - 3840 samples would be 8ms at 48kHz
+                           0x80, 0xbb, 0x00, 0x00,  // nominal rate - 48000
                            0x00, 0x00, // Output gain
                            0x00  // Channel mapping family
                            ];
